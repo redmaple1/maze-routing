@@ -8,9 +8,18 @@ import java.util.Scanner;
  */
 public class MazeData {
 
+    public static final char ROAD = ' ';
+    public static final char WALL = '#';
+
     // N行，M列
     private int N,M;
     private char[][] maze;
+
+    private int entranceX,entranceY;
+    private int exitX,exitY;
+
+    public boolean[][] visited;
+    public boolean[][] path;
 
     public MazeData(String filename){
         if (filename == null){
@@ -34,6 +43,8 @@ public class MazeData {
             M = Integer.parseInt(nm[1]);
 
             maze = new char[N][M];
+            visited = new boolean[N][M];
+            path = new boolean[N][M];
             //读取后续的行
             for (int i = 0; i < N; i ++){
                 String line = scanner.nextLine();
@@ -45,6 +56,8 @@ public class MazeData {
 
                 for (int j = 0; j < M; j++){
                     maze[i][j] = line.charAt(j);
+                    visited[i][j] = false;
+                    path[i][j] = false;
                 }
             }
         } catch (IOException e) {
@@ -54,6 +67,10 @@ public class MazeData {
                 scanner.close();
             }
         }
+        entranceX = 1;
+        entranceY = 0;
+        exitX = N - 2;
+        exitY = M - 1;
     }
 
     public int N(){
@@ -62,6 +79,22 @@ public class MazeData {
 
     public int M(){
         return M;
+    }
+
+    public int getEntranceX() {
+        return entranceX;
+    }
+
+    public int getEntranceY() {
+        return entranceY;
+    }
+
+    public int getExitX() {
+        return exitX;
+    }
+
+    public int getExitY() {
+        return exitY;
     }
 
     public char getMaze(int i, int j){
