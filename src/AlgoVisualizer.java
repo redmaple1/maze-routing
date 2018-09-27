@@ -17,6 +17,21 @@ public class AlgoVisualizer {
 
     private static final int d[][] = {{-1,0},{0,1},{1,0},{0,-1}};
 
+    public AlgoVisualizer(int N, int M){
+        data = new MazeData(N,M);
+        int sceneHeight = data.N() * blockSide;
+        int sceneWidth = data.M() * blockSide;
+
+        // 初始化视图
+        EventQueue.invokeLater(() -> {
+            frame = new AlgoFrame("Maze Solver Visualization",sceneWidth,sceneHeight);
+
+            new Thread(() -> {
+                run();
+            }).start();
+        });
+    }
+
     public AlgoVisualizer(String mazeFile){
 
         // 初始化数据
@@ -39,14 +54,46 @@ public class AlgoVisualizer {
     //动画逻辑
     private void run(){
         // TODO: 编写自己的动画逻辑
-        setData(-1,-1);
+        setData(-1,-1,false);
 
-        go(data.getEntranceX(),data.getEntranceY());
+        renderRandom(data.getEntranceX(),data.getEntranceY() + 1);
 
-        setData(-1,-1);
+//        if (!go(data.getEntranceX(),data.getEntranceY()))
+//            System.out.println("The maze has no solution!");
+
+        setData(-1,-1,false);
     }
 
-    private void go(int x, int y) {
+    private void renderRandom(int x, int y){
+        if (!data.inArea(x,y)){
+            throw new IllegalArgumentException("Render random maze failed,because (x,y) is not in area.");
+        }
+
+        //访问到当前位置
+        data.visited[x][y] = true;
+//        data.maze[x][y] = MazeData.ROAD;
+        setDataForRender(x,y);
+
+        //若遍历到出口前一个方格，结束
+//        if (x == data.getExitX() && y == data.getExitY() - 1)
+//            return;
+
+        for (int i = 0; i < 4; i++){
+            int newX = x + d[i][0] * 2;
+            int newY = y + d[i][1] * 2;
+
+            if (data.inArea(newX,newY) && !data.visited[newX][newY]){
+                //打破墙
+                setDataForRender(x + d[i][0],y + d[i][1]);
+                renderRandom(newX,newY);
+            }
+
+        }
+
+//        setDataForRender(x,y);
+    }
+
+    private boolean go(int x, int y) {
         if (!data.inArea(x,y)){
             throw new IllegalArgumentException("x,y are out of index in go function");
         }
@@ -54,10 +101,10 @@ public class AlgoVisualizer {
         //访问到当前位置
         data.visited[x][y] = true;
 
-        setData(x,y);
+        setData(x,y,true);
 
         if (x == data.getExitX() && y == data.getExitY())
-            return;
+            return true;
 
         for (int i = 0; i < 4; i++){
             int newX = x + d[i][0];
@@ -65,15 +112,27 @@ public class AlgoVisualizer {
             if (data.inArea(newX,newY) &&
                     data.getMaze(newX,newY) == MazeData.ROAD &&
                     !data.visited[newX][newY]){
-                go(newX,newY);
+                if (go(newX,newY)){
+                    return true;
+                }
             }
         }
-        return;
+        data.path[x][y] = false;
+        setData(x,y,false);
+        return false;
     }
 
-    private void setData(int x,int y) {
+    private void setDataForRender(int x,int y) {
         if (data.inArea(x, y)){
-            data.path[x][y] = true;
+            data.maze[x][y] = MazeData.ROAD;
+        }
+        frame.render(data);
+        AlgoVisHelper.pause(DELAY);
+    }
+
+    private void setData(int x,int y,boolean isPath) {
+        if (data.inArea(x, y)){
+            data.path[x][y] = isPath;
         }
         frame.render(data);
         AlgoVisHelper.pause(DELAY);
@@ -87,7 +146,7 @@ public class AlgoVisualizer {
 
         String mazeFile = "maze_101_101.txt";
 
-        AlgoVisualizer vis = new AlgoVisualizer(mazeFile);
+        AlgoVisualizer vis = new AlgoVisualizer(41,41);
     }
 
 }
